@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
-npm run format:check \
+pnpm prettier --list-different "**/*.{md,cjs,js,json,ts,yml,yaml}" \
   && npm run lint
