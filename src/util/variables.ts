@@ -7,8 +7,7 @@ export const OVERHEARD_URL = 'https://aberoth.com/highscore/overheard.html'
 export const OVERHEARD_VERSION = 'v0.0.0'
 
 /** No reports message */
-export const OVERHEARD_NO_REPORTS =
-  'There are no reports of glowing or dark scrolls.'
+export const OVERHEARD_NO_REPORTS = 'There are no reports of glowing or dark scrolls.'
 
 /** School names by color */
 export const OVERHEARD_SCHOOL_NAMES: Record<Uppercase<OrbName>, SchoolName> = {

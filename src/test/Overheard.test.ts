@@ -13,11 +13,7 @@ describe('Overheard.', () => {
   it('Should parse properties', () => {
     const overheard = new Overheard({})
     const res = overheard['parse'](
-      template(
-        150,
-        'waning gibbous',
-        'necromancy and conjuration scrolls are glowing',
-      ),
+      template(150, 'waning gibbous', 'necromancy and conjuration scrolls are glowing'),
     )
     expect(res).toStrictEqual({
       online: 150,
@@ -39,17 +35,11 @@ describe('Overheard.', () => {
     const overheard = new Overheard({})
     expect(
       overheard['parse'](
-        template(
-          50,
-          'new',
-          'necromancy, divination, and conjuration scrolls are glowing',
-        ),
+        template(50, 'new', 'necromancy, divination, and conjuration scrolls are glowing'),
       ),
     ).not.toEqual(null)
     expect(
-      overheard['parse'](
-        template(50, 'new', 'necromancy and conjuration scrolls are glowing'),
-      ),
+      overheard['parse'](template(50, 'new', 'necromancy and conjuration scrolls are glowing')),
     ).not.toEqual(null)
   })
 

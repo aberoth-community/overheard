@@ -1,12 +1,4 @@
-export type OrbName =
-  | 'white'
-  | 'black'
-  | 'green'
-  | 'red'
-  | 'purple'
-  | 'yellow'
-  | 'cyan'
-  | 'blue'
+export type OrbName = 'white' | 'black' | 'green' | 'red' | 'purple' | 'yellow' | 'cyan' | 'blue'
 export type OrbPhase = 'normal' | 'glowing' | 'dark'
 export type MoonPhase =
   | 'waxing_crescent'

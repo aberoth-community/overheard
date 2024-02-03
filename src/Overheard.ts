@@ -59,7 +59,7 @@ export class Overheard extends EventEmitter {
         .option('-t, --time <time>', 'scan interval', timeunit)
         .option('-q, --quiet', 'disable output', false)
         .version(OVERHEARD_VERSION, '-v, --version')
-        .action((opts) => {
+        .action((opts: OverheardOptions) => {
           resolve([new this(opts), opts])
         })
         .parse()
@@ -102,32 +102,17 @@ export class Overheard extends EventEmitter {
     }
     // Check online
     if (isNaN(online)) {
-      this.emit(
-        'error',
-        new Error(`failed parse, invalid online: "${online}"!`),
-      )
+      this.emit('error', new Error(`failed parse, invalid online: "${online}"!`))
       return null
     }
     // Check moon phase
-    if (
-      typeof moon !== 'string' ||
-      !(moon?.toUpperCase() in OVERHEARD_MOON_STATES)
-    ) {
-      this.emit(
-        'error',
-        new Error(`failed parse, unknown moon phase: "${moon}"!`),
-      )
+    if (typeof moon !== 'string' || !(moon?.toUpperCase() in OVERHEARD_MOON_STATES)) {
+      this.emit('error', new Error(`failed parse, unknown moon phase: "${moon}"!`))
       return null
     }
     // Check scroll phase
-    if (
-      typeof phase === 'string' &&
-      !(phase?.toUpperCase() in OVERHEARD_ORB_STATES)
-    ) {
-      this.emit(
-        'error',
-        new Error(`failed parse, unknown scroll phase: "${phase}"!`),
-      )
+    if (typeof phase === 'string' && !(phase?.toUpperCase() in OVERHEARD_ORB_STATES)) {
+      this.emit('error', new Error(`failed parse, unknown scroll phase: "${phase}"!`))
       return null
     }
 
@@ -137,13 +122,8 @@ export class Overheard extends EventEmitter {
       scrolls: (scrolls?.split(/,?\s(?:and\s)?/g) ?? [])
         .map((name): ScrollState | null => {
           // Check scroll name
-          if (
-            !Object.values(OVERHEARD_SCHOOL_NAMES).includes(name as SchoolName)
-          ) {
-            this.emit(
-              'error',
-              new Error(`failed parse, unknown scroll name: "${name}"!`),
-            )
+          if (!Object.values(OVERHEARD_SCHOOL_NAMES).includes(name as SchoolName)) {
+            this.emit('error', new Error(`failed parse, unknown scroll name: "${name}"!`))
             return null
           }
           return {
@@ -168,22 +148,19 @@ export class Overheard extends EventEmitter {
       this._cache.online = state.online
       this.emit('online', this._cache.online)
     }
-    const scrolls = this.scrolls().reduce(
-      (acc: ScrollState[], cur: ScrollState): ScrollState[] => {
-        const newScroll = state.scrolls.find((s) => s.name === cur.name)
-        if (typeof newScroll !== 'undefined') {
-          // Set scroll glowing / dark
-          if (newScroll.phase !== cur.phase) {
-            return [...acc, newScroll]
-          }
-        } else if (cur.phase === 'dark' || cur.phase === 'glowing') {
-          // Set scroll normal
-          return [...acc, { ...cur, phase: 'normal' }]
+    const scrolls = this.scrolls().reduce((acc: ScrollState[], cur: ScrollState): ScrollState[] => {
+      const newScroll = state.scrolls.find((s) => s.name === cur.name)
+      if (typeof newScroll !== 'undefined') {
+        // Set scroll glowing / dark
+        if (newScroll.phase !== cur.phase) {
+          return [...acc, newScroll]
         }
-        return acc
-      },
-      [],
-    )
+      } else if (cur.phase === 'dark' || cur.phase === 'glowing') {
+        // Set scroll normal
+        return [...acc, { ...cur, phase: 'normal' }]
+      }
+      return acc
+    }, [])
     if (scrolls.length > 0) {
       scrolls.forEach(({ name, phase }) => {
         this._cache.scrolls[name] = phase
@@ -198,10 +175,7 @@ export class Overheard extends EventEmitter {
    * @param arg
    * @returns
    */
-  emit<T extends keyof OverheardEvent>(
-    name: T,
-    arg: OverheardEvent[T],
-  ): boolean {
+  emit<T extends keyof OverheardEvent>(name: T, arg: OverheardEvent[T]): boolean {
     return super.emit(name, arg)
   }
 
@@ -211,10 +185,7 @@ export class Overheard extends EventEmitter {
    * @param listener - Event listener
    * @returns
    */
-  on<T extends keyof OverheardEvent>(
-    name: T,
-    listener: (arg: OverheardEvent[T]) => void,
-  ): this {
+  on<T extends keyof OverheardEvent>(name: T, listener: (arg: OverheardEvent[T]) => void): this {
     return super.on(name, listener)
   }
 
@@ -224,10 +195,7 @@ export class Overheard extends EventEmitter {
    * @param listener - Event listener
    * @returns
    */
-  once<T extends keyof OverheardEvent>(
-    name: T,
-    listener: (arg: OverheardEvent[T]) => void,
-  ): this {
+  once<T extends keyof OverheardEvent>(name: T, listener: (arg: OverheardEvent[T]) => void): this {
     return super.once(name, listener)
   }
 
@@ -237,10 +205,7 @@ export class Overheard extends EventEmitter {
    * @param listener - Event listener
    * @returns
    */
-  removeListener<T extends keyof OverheardEvent>(
-    name: T,
-    listener: (arg: any) => void,
-  ): this {
+  removeListener<T extends keyof OverheardEvent>(name: T, listener: (arg: any) => void): this {
     return super.removeListener(name, listener)
   }
 
@@ -265,9 +230,9 @@ export class Overheard extends EventEmitter {
    * @returns
    */
   scrolls(): ScrollState[] {
-    return (
-      Object.entries(this._cache.scrolls) as Array<[SchoolName, OrbPhase]>
-    ).map(([name, phase]) => ({ name, phase }))
+    return (Object.entries(this._cache.scrolls) as Array<[SchoolName, OrbPhase]>).map(
+      ([name, phase]) => ({ name, phase }),
+    )
   }
 
   /** Scraper loop */

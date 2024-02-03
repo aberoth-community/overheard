@@ -15,11 +15,7 @@ if (require.main === module) {
             console.log(`online: ${count}`)
           })
           .on('scrolls', (scrolls) => {
-            console.log(
-              scrolls
-                .map(({ name, phase }) => `scroll: ${name} ${phase}`)
-                .join('\n'),
-            )
+            console.log(scrolls.map(({ name, phase }) => `scroll: ${name} ${phase}`).join('\n'))
           })
       }
       return overheard.start()
