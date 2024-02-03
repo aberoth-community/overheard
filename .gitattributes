@@ -1,16 +1,23 @@
 * text=auto
 
-*.md               text diff=markdown
+# Document
+*.md               text
+*.txt              text
+
+# Configuration
 *.json             text
 *.yaml             text
 *.yml              text
-package-lock.json  text -diff
 
-.husky/**/*        text eol=lf
+pnpm-lock.yml      text -diff
+
+# Shell
 *.sh               text eol=lf
+.husky/**/*        text eol=lf
 
+# Source
 *.cjs              text
-*.mjs              text
 *.js               text
 *.ts               text
+*.ahk              text eol=crlf
 *.py               text
