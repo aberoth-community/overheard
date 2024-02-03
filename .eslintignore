@@ -1,4 +1,3 @@
-dist
-docs
-logs
-node_modules
+dist/
+docs/
+node_modules/
