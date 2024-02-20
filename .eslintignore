@@ -1,4 +1,4 @@
-dist
-docs
-logs
-node_modules
+bin/
+dist/
+docs/
+node_modules/

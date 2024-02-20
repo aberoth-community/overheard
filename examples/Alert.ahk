@@ -2,7 +2,7 @@
 
 Shell := ComObject("WScript.Shell")
 Exec := Shell.Exec(A_ComSpec " /Q /K echo off")
-Exec.StdIn.WriteLine("node ..\dist\index.js -t 10s`nexit")
+Exec.StdIn.WriteLine("node ..\dist\bin.js -t 10s`nexit")
 
 while Exec.Status == 0 {
   line := Exec.StdOut.Readline()

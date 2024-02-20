@@ -24,64 +24,61 @@ cd {project_dir} && npm init
 
 ## Usage:
 
-### Command-line:
-
-> see: [Shell-Scripting](#shell-scripting)
-
-```
-$ ./overheard --help
-Usage: overheard [options]
-
-Options:
-  -t, --time <time>  scan interval
-  -q, --quiet        disable output (default: false)
-  -v, --version      output the version number
-  -h, --help         display help for command
-```
-
 ### Example:
 
 ```javascript
-import { OVERHEARD_SCHOOL_NAMES, Overheard } from '@aberoth-community/overheard'
+import Overheard from '@aberoth-community/overheard'
 
 // === Creating a new instance ===
-const over = new Overheard(
+const overheard = new Overheard(
   // Scraper options
   {
-    time: 10e3,
+    interval: 10e3,
     headers: {},
   },
   // Scraper cache
   {
     online: 50,
     moon: 'full',
-    scrolls: {
-      [OVERHEARD_SCHOOL_NAMES.RED]: 'dark',
+    realms: {
+      [Overheard.OVERHEARD_SCHOOLS.yellow]: 'dark',
     },
   },
 )
 
 // === Listening for events ===
-over
-  .on('error', console.log) // failed parse, invalid content "<html>504</html>"!
-  .on('online', console.log) // 100
-  .on('moon', console.log) // nearly_full
-  .on('scrolls', console.log) // { name: 'necromancy', phase: 'normal' }
-  // About to exit...
-  .on('done', () => {
-    // ...
-  })
-  // Start the scraper
-  .start()
-  // Stop the scraper
-  .stop()
+overheard.addEventListener('error', console.log) // failed parse, invalid content "<html>504</html>"!
+overheard.addEventListener('online', console.log) // 100
+overheard.addEventListener('moon', console.log) // nearly_full
+overheard.addEventListener('realm', console.log) // { name: 'necromancy', phase: 'normal' }
+// About to exit...
+overheard.addEventListener('exit', () => {
+  // ...
+})
+// Start the scraper
+overheard.start()
+// Stop the scraper
+overheard.stop()
 
 // ========= Getters =========
 console.log(
-  over.scrolls(), // [{ name, phase }, { name, phase }, ...]
-  over.moon(), // nearly_full
-  over.online(), // 100
+  overheard.getScrolls(), // [{ name, phase }, { name, phase }, ...]
+  overheard.getMoon(), // nearly_full
+  overheard.getOnline(), // 100
 )
+```
+
+### Command-line:
+
+```
+$ ./overheard --help
+Usage: overheard [options]
+
+Options:
+  -h, --header [values...]  add request headers.
+  -i, --interval <int>      set scan interval.
+  -v, --version             output the version number
+  --help                    display help for command
 ```
 
 ### Shell-scripting:

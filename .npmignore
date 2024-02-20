@@ -4,6 +4,4 @@
 !LICENSE
 
 !dist/**/*
-!types/**/*
 !package.json
-!tsconfig.json

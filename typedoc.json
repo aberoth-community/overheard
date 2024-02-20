@@ -1,0 +1,4 @@
+{
+  "entryPoints": ["./src/Overheard.ts", "./src/bin.ts"],
+  "out": "./docs"
+}
