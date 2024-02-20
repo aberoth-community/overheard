@@ -1,80 +1,260 @@
-import { EventEmitter } from 'events'
-import {
-  OVERHEARD_MOON_STATES,
-  OVERHEARD_ORB_STATES,
-  OVERHEARD_SCHOOL_NAMES,
-  OVERHEARD_URL,
-  OVERHEARD_VERSION,
-} from './util/variables'
+/**
+ * @module Overheard
+ * @description Aberoth Overheard scraper
+ * @author ashnel3
+ * @license MIT
+ */
 
-import type {
-  GameState,
-  MoonPhase,
-  Options,
-  OrbPhase,
-  OverheardCache,
-  OverheardEvent,
-  OverheardOptions,
-  SchoolName,
-  ScrollState,
-} from '../types/index'
+import { TypedEventTarget } from 'typescript-event-target'
+
+/** Aberoth realm color */
+export type RealmColor = 'white' | 'black' | 'green' | 'red' | 'purple' | 'yellow' | 'cyan' | 'blue'
+
+/** Aberoth realm phase */
+export type RealmPhase = 'normal' | 'glowing' | 'dark'
+
+/** Aberoth moon phase */
+export type MoonPhase =
+  | 'waxing_crescent'
+  | 'first_quarter'
+  | 'waxing_gibbous'
+  | 'nearly_full'
+  | 'full'
+  | 'waning_gibbous'
+  | 'third_quarter'
+  | 'waning_crescent'
+  | 'nearly_new'
+  | 'new'
+
+/** Aberoth magic school name */
+export type SchoolName =
+  | 'divination'
+  | 'evocation'
+  | 'enchantment'
+  | 'necromancy'
+  | 'transmutation'
+  | 'conjuration'
+  | 'abjuration'
+  | 'illusion'
+
+/** Aberoth player count */
+export type Online = number | 'very_few'
+
+/** Aberoth realm state */
+export interface RealmState {
+  name: RealmColor
+  phase: RealmPhase
+  school: SchoolName
+}
+
+/** Aberoth game state */
+export interface GameState {
+  online: Online
+  moon: MoonPhase
+  realms: Partial<Record<SchoolName, RealmPhase>>
+}
+
+/** Overheard configuration */
+export type OverheardConfiguration = Partial<{
+  /** Request headers */
+  headers: Record<string, string>
+  /** Scan interval in ms */
+  interval: number
+}>
+
+/** Overheard event map */
+export interface OverheardEventMap {
+  error: OverheardErrorEvent
+  exit: OverheardExitEvent
+  moon: OverheardMoonEvent
+  online: OverheardOnlineEvent
+  realm: OverheardRealmEvent
+}
 
 /**
- * Simple overheard scraper
- * @class
+ * Overheard base event
+ * @event
  */
-export class Overheard extends EventEmitter {
-  private readonly _cache: OverheardCache
-  private readonly _opts: Partial<Options>
-  private timeout?: NodeJS.Timeout
+export abstract class OverheardEvent<K extends keyof OverheardEventMap> extends Event {
+  readonly target: Overheard
 
-  /**
-   * Create new overheard instance
-   * @param opts  - Scraper opts
-   * @param cache - Stored values
-   */
-  constructor(opts?: Partial<Options>, cache: Partial<OverheardCache> = {}) {
+  constructor(overheard: Overheard, eventName: K, init?: EventInit) {
+    super(eventName, init)
+    this.target = overheard
+  }
+}
+
+/**
+ * Overheard error event
+ * @event
+ */
+export class OverheardErrorEvent extends OverheardEvent<'error'> {
+  constructor(
+    overheard: Overheard,
+    readonly error: Error,
+    init?: EventInit,
+  ) {
+    super(overheard, 'error', init)
+  }
+}
+
+/**
+ * Overheard exit event
+ * @event
+ * @example
+ * ```
+ * // Saving & restoring the cache
+ * import { readFile, writeFile } from 'fs'
+ * const cachePath = 'path'
+ * const overheard = new Overheard(
+ *   { ... },
+ *   JSON.parse(await readFile(cachePath))
+ * ).start()
+ * overheard.addEventListener('exit', async (event) => {
+ *   await writeFile(JSON.stringify(event.cache))
+ * })
+ * ```
+ */
+export class OverheardExitEvent extends OverheardEvent<'exit'> {
+  constructor(
+    overheard: Overheard,
+    readonly cache: GameState,
+    init?: EventInit,
+  ) {
+    super(overheard, 'exit', init)
+  }
+}
+
+/**
+ * Overheard moon event
+ * @event
+ */
+export class OverheardMoonEvent extends OverheardEvent<'moon'> {
+  constructor(
+    overheard: Overheard,
+    readonly phase: MoonPhase,
+    init?: EventInit,
+  ) {
+    super(overheard, 'moon', init)
+  }
+}
+
+/**
+ * Overheard online event
+ * @event
+ */
+export class OverheardOnlineEvent extends OverheardEvent<'online'> {
+  constructor(
+    overheard: Overheard,
+    readonly online: Online,
+    init?: EventInit,
+  ) {
+    super(overheard, 'online', init)
+  }
+}
+
+/**
+ * Overheard realm event
+ * @event
+ */
+export class OverheardRealmEvent extends OverheardEvent<'realm'> implements RealmState {
+  readonly name: RealmColor
+
+  constructor(
+    overheard: Overheard,
+    readonly school: SchoolName,
+    readonly phase: RealmPhase,
+    init?: EventInit,
+  ) {
+    super(overheard, 'realm', init)
+    this.name = Overheard.OVERHEARD_REALMS[school]
+  }
+}
+
+/** Overheard scraper */
+export class Overheard extends TypedEventTarget<OverheardEventMap> {
+  /** Moon phases */
+  static readonly OVERHEARD_MOONS: MoonPhase[] = [
+    'first_quarter',
+    'full',
+    'nearly_full',
+    'nearly_new',
+    'new',
+    'third_quarter',
+    'waning_crescent',
+    'waning_gibbous',
+    'waxing_crescent',
+    'waxing_gibbous',
+  ]
+
+  /** Realms by magic school */
+  static readonly OVERHEARD_REALMS: Record<SchoolName, RealmColor> = {
+    abjuration: 'cyan',
+    conjuration: 'yellow',
+    divination: 'white',
+    enchantment: 'green',
+    evocation: 'black',
+    illusion: 'blue',
+    necromancy: 'red',
+    transmutation: 'purple',
+  }
+
+  /** Magic schools by realm */
+  static readonly OVERHEARD_SCHOOLS: Record<RealmColor, SchoolName> = {
+    black: 'evocation',
+    blue: 'illusion',
+    cyan: 'abjuration',
+    green: 'enchantment',
+    purple: 'transmutation',
+    red: 'necromancy',
+    white: 'divination',
+    yellow: 'conjuration',
+  }
+
+  /** Overheard page url */
+  static readonly OVERHEARD_URL = 'https://aberoth.com/highscore/overheard.html'
+
+  /** Overheard version */
+  static readonly OVERHEARD_VERSION = '0.0.0'
+
+  /** Overheard configuration */
+  config: OverheardConfiguration
+
+  /** Overheard game-state cache */
+  cache: GameState
+
+  /** Overheard is running */
+  running = false
+
+  /** Overheard running since */
+  runningSince?: Date
+
+  /** Overheard next scan timeout */
+  timeout?: ReturnType<typeof setTimeout>
+
+  constructor(config: OverheardConfiguration = {}, cache: Partial<GameState> = {}) {
     super()
-    this._cache = {
-      scrolls: Object.values(OVERHEARD_SCHOOL_NAMES).reduce((acc, cur) => {
-        return { ...acc, [cur]: 'normal' }
+    this.cache = {
+      moon: 'first_quarter',
+      online: 'very_few',
+      realms: Object.entries(Overheard.OVERHEARD_SCHOOLS).reduce((acc, [school, phase]) => {
+        return { ...acc, [school]: phase }
       }, {}),
       ...cache,
     }
-    this._opts = {
-      ...opts,
-    }
+    this.config = config
   }
 
   /**
-   * Create instance from command-line options
-   * @returns - Overheard instance & options
+   * Fetch page text
+   * @param url      Overheard page url
+   * @param headers  Request headers
+   * @returns        Overheard page text
    */
-  static async fromCLI(): Promise<[Overheard, OverheardOptions]> {
-    const { Command } = await import('commander')
-    const { timeunit } = await import('./util/cli/timeunit')
-    return await new Promise((resolve, reject) => {
-      const app = new Command('overheard')
-      app
-        .option('-t, --time <time>', 'scan interval', timeunit)
-        .option('-q, --quiet', 'disable output', false)
-        .version(OVERHEARD_VERSION, '-v, --version')
-        .action((opts: OverheardOptions) => {
-          resolve([new this(opts), opts])
-        })
-        .parse()
-    })
-  }
-
-  /**
-   * Fetch text
-   * @param url - Page url
-   * @returns   - Page text
-   */
-  private async fetch(url: string): Promise<string> {
+  static async fetch(url: string, headers?: Record<string, string>): Promise<string> {
     const res = await fetch(url, {
+      headers,
       method: 'GET',
-      headers: this._opts?.headers,
     })
     if (!res.ok) {
       throw new Error(`[${res.status}] ${res.statusText}`)
@@ -83,192 +263,123 @@ export class Overheard extends EventEmitter {
   }
 
   /**
-   * Parse overheard html
-   * @param text - Page text
-   * @returns    - Game state
+   * Parse page text
+   * @param text    Overheard page text
+   * @returns       Overheard game-state
    */
-  private parse(text: string): GameState | null {
-    const [_f, _online, _moon, scrolls, phase] =
+  static parse(text: string): GameState {
+    const match =
       /(?:There are (\d+|very few) champions)(?:.*The moon is (?:a |in its )?([\w\s]+))(?:.*Rumor has it that ([\w\s,]+) scrolls are (\w+))?/.exec(
         text,
-      ) ?? []
-    const online = _online !== 'very few' ? parseInt(_online ?? NaN, 10) : 0
-    const moon = _moon?.replace(/\s/g, '_') as MoonPhase
-
-    // Check regex matched
-    if (typeof _f !== 'string') {
-      this.emit('error', new Error(`failed parse, invalid content "${text}"!`))
-      return null
+      )
+    if (match === null) {
+      throw new Error('failed to match page text!\n\n' + text)
     }
-    // Check online
-    if (isNaN(online)) {
-      this.emit('error', new Error(`failed parse, invalid online: "${online}"!`))
-      return null
-    }
-    // Check moon phase
-    if (typeof moon !== 'string' || !(moon?.toUpperCase() in OVERHEARD_MOON_STATES)) {
-      this.emit('error', new Error(`failed parse, unknown moon phase: "${moon}"!`))
-      return null
-    }
-    // Check scroll phase
-    if (typeof phase === 'string' && !(phase?.toUpperCase() in OVERHEARD_ORB_STATES)) {
-      this.emit('error', new Error(`failed parse, unknown scroll phase: "${phase}"!`))
-      return null
-    }
-
     return {
-      moon,
-      online,
-      scrolls: (scrolls?.split(/,?\s(?:and\s)?/g) ?? [])
-        .map((name): ScrollState | null => {
-          // Check scroll name
-          if (!Object.values(OVERHEARD_SCHOOL_NAMES).includes(name as SchoolName)) {
-            this.emit('error', new Error(`failed parse, unknown scroll name: "${name}"!`))
-            return null
-          }
-          return {
-            name: name as SchoolName,
-            phase: phase as OrbPhase,
-          }
-        })
-        .filter((s): s is ScrollState => s !== null),
+      online: !isNaN(parseInt(match[1], 10)) ? parseInt(match[1], 10) : 'very_few',
+      moon: match[2].replace(/\s/g, '_') as MoonPhase,
+      realms: (match[3]?.split(/,?\s(?:and\s)?/g) ?? []).reduce((acc, school) => {
+        return { ...acc, [school]: match[4] }
+      }, {}),
     }
   }
 
   /**
-   * Diff cache & emit events
-   * @param state - New state
+   * Scrape page & reschedule recursive loop
+   * @private
+   * @internal
    */
-  private diff(state: GameState): void {
-    if (state.moon !== this._cache.moon) {
-      this._cache.moon = state.moon
-      this.emit('moon', this._cache.moon)
-    }
-    if (state.online !== this._cache.online) {
-      this._cache.online = state.online
-      this.emit('online', this._cache.online)
-    }
-    const scrolls = this.scrolls().reduce((acc: ScrollState[], cur: ScrollState): ScrollState[] => {
-      const newScroll = state.scrolls.find((s) => s.name === cur.name)
-      if (typeof newScroll !== 'undefined') {
-        // Set scroll glowing / dark
-        if (newScroll.phase !== cur.phase) {
-          return [...acc, newScroll]
+  private _next(): void {
+    Overheard.fetch(Overheard.OVERHEARD_URL)
+      .then((text) => Overheard.parse(text))
+      .then(({ moon, online, realms }) => {
+        // diff moon
+        if (
+          this.cache.moon !== moon &&
+          !this.dispatchTypedEvent('moon', new OverheardMoonEvent(this, moon))
+        ) {
+          this.cache.moon = moon
         }
-      } else if (cur.phase === 'dark' || cur.phase === 'glowing') {
-        // Set scroll normal
-        return [...acc, { ...cur, phase: 'normal' }]
-      }
-      return acc
-    }, [])
-    if (scrolls.length > 0) {
-      scrolls.forEach(({ name, phase }) => {
-        this._cache.scrolls[name] = phase
+        // diff online
+        if (
+          this.cache.online !== online &&
+          !this.dispatchTypedEvent('online', new OverheardOnlineEvent(this, online))
+        ) {
+          this.cache.online = online
+        }
+        // diff realms
+        ;(Object.entries(realms) as Array<[SchoolName, RealmPhase]>)
+          .filter(([school, phase]) => this.cache.realms?.[school] !== phase)
+          .forEach(([school, phase]) => {
+            if (this.dispatchTypedEvent('realm', new OverheardRealmEvent(this, school, phase))) {
+              this.cache.realms[school] = phase
+            }
+          })
       })
-      this.emit('scrolls', scrolls)
-    }
+      .catch((err) => {
+        this.dispatchTypedEvent('error', new OverheardErrorEvent(this, err as Error))
+      })
+      .finally(() => {
+        if (this.running && !isNaN(this.config.interval as unknown as number)) {
+          // schedule next scan
+          this.timeout = setTimeout(() => {
+            this._next()
+          }, this.config.interval)
+        }
+      })
   }
 
   /**
-   * Emit event
-   * @param name
-   * @param arg
-   * @returns
+   * Get current moon phase
+   * @returns  Moon phase
    */
-  emit<T extends keyof OverheardEvent>(name: T, arg: OverheardEvent[T]): boolean {
-    return super.emit(name, arg)
+  getMoon(): MoonPhase | undefined {
+    return this.cache.moon
   }
 
   /**
-   * Add event listener
-   * @param name - Event name
-   * @param listener - Event listener
-   * @returns
+   * Get current online count
+   * @returns  Online count
    */
-  on<T extends keyof OverheardEvent>(name: T, listener: (arg: OverheardEvent[T]) => void): this {
-    return super.on(name, listener)
+  getOnline(): Online | undefined {
+    return this.cache.online
   }
 
   /**
-   * Add single use event listener
-   * @param name - Event name
-   * @param listener - Event listener
-   * @returns
+   * Get realm states
+   * @returns  Realm state array
    */
-  once<T extends keyof OverheardEvent>(name: T, listener: (arg: OverheardEvent[T]) => void): this {
-    return super.once(name, listener)
-  }
-
-  /**
-   * Remove event listener
-   * @param name - Event name
-   * @param listener - Event listener
-   * @returns
-   */
-  removeListener<T extends keyof OverheardEvent>(name: T, listener: (arg: any) => void): this {
-    return super.removeListener(name, listener)
-  }
-
-  /**
-   * Get online members
-   * @returns
-   */
-  online(): number {
-    return this._cache.online ?? 0
-  }
-
-  /**
-   * Get moon phase
-   * @returns
-   */
-  moon(): MoonPhase | undefined {
-    return this._cache.moon
-  }
-
-  /**
-   * Get scroll's states
-   * @returns
-   */
-  scrolls(): ScrollState[] {
-    return (Object.entries(this._cache.scrolls) as Array<[SchoolName, OrbPhase]>).map(
-      ([name, phase]) => ({ name, phase }),
+  getRealms(): RealmState[] {
+    return (Object.entries(this.cache.realms ?? {}) as Array<[SchoolName, RealmPhase]>).map(
+      ([school, phase]) => ({ name: Overheard.OVERHEARD_REALMS[school], phase, school }),
     )
   }
 
-  /** Scraper loop */
-  next(): void {
-    this.fetch(OVERHEARD_URL)
-      .then((html) => this.parse(html))
-      .then((state) => {
-        if (state !== null) {
-          this.diff(state)
-        }
-      })
-      .finally(() => {
-        if (!isNaN(this._opts?.time ?? NaN)) {
-          this.timeout = setTimeout(() => {
-            this.next()
-          }, this._opts.time)
-        } else {
-          this.emit('done', undefined)
-        }
-      })
-      .catch((err) => {
-        if (err instanceof Error) {
-          console.error(err.message)
-        }
-      })
-  }
-
-  /** Stop scraper */
-  stop(): void {
-    this._opts.time = NaN
-    clearTimeout(this.timeout)
-  }
-
-  /** Start scraper */
+  /**
+   * Start scraper loop
+   * @returns  this
+   */
   start(): this {
-    this.next()
+    if (!this.running) {
+      this.running = true
+      this.runningSince = new Date()
+      this._next()
+    }
+    return this
+  }
+
+  /**
+   * Stop scraper loop
+   * @returns  this
+   */
+  stop(): this {
+    if (!this.dispatchTypedEvent('exit', new OverheardExitEvent(this, this.cache))) {
+      this.running = false
+      this.runningSince = undefined
+      clearTimeout(this.timeout)
+    }
     return this
   }
 }
+
+export default Overheard

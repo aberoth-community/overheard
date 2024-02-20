@@ -1,4 +1,3 @@
 #!/usr/bin/env sh
 
-pnpm prettier --list-different "**/*.{md,cjs,js,json,ts,yml,yaml}" \
-  && npm run lint
+pnpm run lint
