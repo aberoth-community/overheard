@@ -1,4 +1,4 @@
-name: main
+name: publish
 on:
   push:
     branches: ['main']
@@ -33,4 +33,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - run: pnpm install
-      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm typedoc
+      - name: Publish npm package
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+      - name: Publish docs
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          BRANCH: docs
+          FOLDER: docs
+          REPO: self
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
