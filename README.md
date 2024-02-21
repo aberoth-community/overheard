@@ -1,76 +1,30 @@
 # @aberoth-community/overheard
 
-> ![CI](https://github.com/aberoth-community/overheard/actions/workflows/ci.yml/badge.svg)
+> [![Discord](https://img.shields.io/discord/370780258141601792)](https://discord.gg/kWZJVUjZAe) [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/aberoth-community/overheard/main.yml?label=tests)](https://github.com/aberoth-community/overheard/actions) [![NPM Version](https://img.shields.io/npm/v/%40aberoth-community%2Foverheard)](https://www.npmjs.com/package/@aberoth-community/overheard) [![GitHubStars](https://img.shields.io/github/stars/aberoth-community/overheard)](https://github.com/aberoth-community/overheard/stargazers)
 
-A simple Aberoth ["Overheard"](https://aberoth.com/highscore/overheard.html) scraper library & cli.
+A simple & portable ["Aberoth Overheard"](https://aberoth.com/highscore/overheard.html) scraper library and cli.
 
 ## Installation:
 
-1. Initialize your project
+### Npm:
 
-```bash
-cd {project_dir} && npm init
-```
+| client | ...                                     |
+| ------ | --------------------------------------- |
+| npm    | `npm i @aberoth-community/overheard`    |
+| pnpm   | `pnpm i @aberoth-community/overheard`   |
+| yarn   | `yarn add @aberoth-community/overheard` |
 
-2. Download the latest "\*.tgz" release - _[link](https://github.com/aberoth-community/overheard/releases/latest)_
+### Executables:
 
-3. Install the library
+> (See: [Releases](https://github.com/aberoth-community/overheard/releases))
 
-| client | ...                                                         |
-| ------ | ----------------------------------------------------------- |
-| npm    | `npm install ./aberoth-community-overheard-0.0.0.tgz`       |
-| pnpm   | `pnpm install ./aberoth-community-overheard-0.0.0.tgz`      |
-| yarn   | `yarn install file://aberoth-community-overheard-0.0.0.tgz` |
+For convenience overheard can also be downloaded as a standalone executable.
 
 ## Usage:
 
-### Example:
+### Command-Line:
 
-```javascript
-import Overheard from '@aberoth-community/overheard'
-
-// === Creating a new instance ===
-const overheard = new Overheard(
-  // Scraper options
-  {
-    interval: 10e3,
-    headers: {},
-  },
-  // Scraper cache
-  {
-    online: 50,
-    moon: 'full',
-    realms: {
-      [Overheard.OVERHEARD_SCHOOLS.yellow]: 'dark',
-    },
-  },
-)
-
-// === Listening for events ===
-overheard.addEventListener('error', console.log) // failed parse, invalid content "<html>504</html>"!
-overheard.addEventListener('online', console.log) // 100
-overheard.addEventListener('moon', console.log) // nearly_full
-overheard.addEventListener('realm', console.log) // { name: 'necromancy', phase: 'normal' }
-// About to exit...
-overheard.addEventListener('exit', () => {
-  // ...
-})
-// Start the scraper
-overheard.start()
-// Stop the scraper
-overheard.stop()
-
-// ========= Getters =========
-console.log(
-  overheard.getScrolls(), // [{ name, phase }, { name, phase }, ...]
-  overheard.getMoon(), // nearly_full
-  overheard.getOnline(), // 100
-)
-```
-
-### Command-line:
-
-```
+```bash
 $ ./overheard --help
 Usage: overheard [options]
 
@@ -81,11 +35,50 @@ Options:
   --help                    display help for command
 ```
 
-### Shell-scripting:
+### Example:
 
-> see: [scripts/sqlite.sh](scripts/sqlite.sh), [scripts/popen.py](scripts/popen.py)
+> (See: [Api-Docs](https://aberoth-community.github.io/overheard), [examples/webhook.js](examples/webhook.js))
 
-```bash
-./overheard -i 10s \
-  | xargs -I {} bash -c 'command {}'
+```typescript
+import Overheard from '@aberoth-community/overheard'
+
+// main
+void (async () => {
+  const overheard = new Overheard(
+    // scraper options
+    { headers: {}, interval: 30e3 },
+    // scraper cache (optional)
+    {
+      online: 50,
+      moon: 'full',
+      realms: {
+        [Overheard.OVERHEARD_SCHOOLS.yellow]: 'dark',
+      },
+    },
+  )
+
+  // start the scraper loop
+  overheard.start()
+  // stop scraper
+  overheard.stop()
+
+  // === events ===
+  overheard.addEventListener('error', (event) => {
+    console.error(event.error)
+  })
+  overheard.addEventListener('exit', (event) => {
+    console.log('exit!')
+  })
+  overheard.addEventListener('moon', (event) => {
+    console.log(`moon: ${event.phase}`)
+  })
+  overheard.addEventListener('realm', (event) => {
+    console.log(`scroll: ${event.name} ${event.phase}`)
+  })
+
+  // === getters ===
+  console.log(overheard.getRealms()) // [{ name: 'white', school: 'divination', phase: 'dark' }, ...]
+  console.log(overheard.getMoon()) // nearly_full
+  console.log(overheard.getOnline()) // 100
+})()
 ```

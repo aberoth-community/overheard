@@ -7,6 +7,7 @@
 
 import { Command, CommanderError } from 'commander'
 import { Overheard } from './Overheard.js'
+import { realpath } from 'fs/promises'
 import { fileURLToPath } from 'url'
 
 /** Overheard command-line options */
@@ -33,7 +34,7 @@ export const parseArgTimeunit = (min = 0, max = Infinity) => {
     const [t, unit] = value.split(/(?=[a-z])/)
     const time = parseInt(t, 10)
     if (isNaN(time)) {
-      throw new CommanderError(1, '1', '')
+      throw new CommanderError(1, '1', `invalid time '${value}'!`)
     }
     return Math.min(Math.max(unit in units ? time * units[unit] : time, min), max)
   }
@@ -47,7 +48,7 @@ export const parseArgTimeunit = (min = 0, max = Infinity) => {
 export const parseArgSelect = <T extends string>(options: T[]) => {
   return (value: string): T => {
     if (!options.includes(value as T)) {
-      throw new CommanderError(1, '1', '')
+      throw new CommanderError(1, '1', `invalid selection '${value}'!`)
     }
     return value as T
   }
@@ -67,7 +68,7 @@ export const createOverheardCommand = (): Command => {
     const overheard = new Overheard({
       headers: opts.header?.reduce((acc, cur) => {
         const match = cur.split('=', 2)
-        return match.length === 2 ? { ...acc, [match[0].toUpperCase()]: match[1] } : acc
+        return match.length === 2 ? { ...acc, [match[0]]: match[1] } : acc
       }, {}),
       interval: opts.interval,
     }).start()
@@ -86,7 +87,12 @@ export const createOverheardCommand = (): Command => {
   })
 }
 
-// entry-point
-if (import.meta.env?.MODE === 'development' || fileURLToPath(import.meta.url) === process.argv[1]) {
-  createOverheardCommand().parse()
-}
+// entrypoint
+void (async () => {
+  if (
+    fileURLToPath(import.meta.url) === (await realpath(process.argv[1])) ||
+    import.meta.env?.MODE === 'development'
+  ) {
+    createOverheardCommand().parse()
+  }
+})()
