@@ -33,7 +33,7 @@ export const parseArgTimeunit = (min = 0, max = Infinity) => {
     const [t, unit] = value.split(/(?=[a-z])/)
     const time = parseInt(t, 10)
     if (isNaN(time)) {
-      throw new CommanderError(1, '1', '')
+      throw new CommanderError(1, '1', `invalid time '${value}'!`)
     }
     return Math.min(Math.max(unit in units ? time * units[unit] : time, min), max)
   }
@@ -47,7 +47,7 @@ export const parseArgTimeunit = (min = 0, max = Infinity) => {
 export const parseArgSelect = <T extends string>(options: T[]) => {
   return (value: string): T => {
     if (!options.includes(value as T)) {
-      throw new CommanderError(1, '1', '')
+      throw new CommanderError(1, '1', `invalid selection '${value}'!`)
     }
     return value as T
   }
