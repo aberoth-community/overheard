@@ -67,7 +67,7 @@ export const createOverheardCommand = (): Command => {
     const overheard = new Overheard({
       headers: opts.header?.reduce((acc, cur) => {
         const match = cur.split('=', 2)
-        return match.length === 2 ? { ...acc, [match[0].toUpperCase()]: match[1] } : acc
+        return match.length === 2 ? { ...acc, [match[0]]: match[1] } : acc
       }, {}),
       interval: opts.interval,
     }).start()
