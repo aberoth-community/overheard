@@ -7,6 +7,7 @@
 
 import { Command, CommanderError } from 'commander'
 import { Overheard } from './Overheard.js'
+import { realpath } from 'fs/promises'
 import { fileURLToPath } from 'url'
 
 /** Overheard command-line options */
@@ -86,7 +87,12 @@ export const createOverheardCommand = (): Command => {
   })
 }
 
-// entry-point
-if (import.meta.env?.MODE === 'development' || fileURLToPath(import.meta.url) === process.argv[1]) {
-  createOverheardCommand().parse()
-}
+// entrypoint
+void (async () => {
+  if (
+    fileURLToPath(import.meta.url) === (await realpath(process.argv[1])) ||
+    import.meta.env?.MODE === 'development'
+  ) {
+    createOverheardCommand().parse()
+  }
+})()
