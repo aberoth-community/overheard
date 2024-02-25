@@ -11,6 +11,10 @@ describe('bin', () => {
     expect(parseArgTimeunit()('1000')).toBe(1000)
   })
 
+  test('parseArgTimeunit should throw with an invalid unit', () => {
+    expect(() => parseArgTimeunit()('10x')).toThrowError(CommanderError)
+  })
+
   test('parseArgSelect should validate selection', () => {
     expect(parseArgSelect(['a', 'b', 'c'])('c')).toBe('c')
   })

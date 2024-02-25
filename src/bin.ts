@@ -35,7 +35,7 @@ export const parseArgTimeunit = (min = 0, max = Infinity) => {
     }
     const [t, unit] = value.split(/(?=[a-z])/)
     const time = parseInt(t, 10)
-    if (isNaN(time)) {
+    if (isNaN(time) || (typeof unit === 'string' && !(unit in units))) {
       throw new CommanderError(1, '1', `invalid time '${value}'!`)
     }
     return Math.min(Math.max(unit in units ? time * units[unit] : time, min), max)
