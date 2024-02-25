@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * @module bin
  * @description Overheard command-line interface
