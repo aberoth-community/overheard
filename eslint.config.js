@@ -5,14 +5,18 @@ import prettier from 'eslint-plugin-prettier/recommended'
 
 /** @type { import("eslint").Linter.FlatConfig } */
 export default [
-  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+  {
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
   js.configs.recommended,
   ...ts.configs.recommended,
   prettier,
   {
-    ignores: ['dist/', 'docs/'],
+    ignores: ['dist/'],
+  },
+  {
     rules: {
-      'prettier/prettier': 1,
+      'prettier/prettier': 'warn',
     },
   },
 ]

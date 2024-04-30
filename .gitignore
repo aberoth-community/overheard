@@ -5,6 +5,10 @@
 *.db
 *.sqlite
 
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
 # Lockfiles
 package-lock.json
 yarn.lock

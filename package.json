@@ -3,12 +3,21 @@
   "version": "3.0.1",
   "description": "A simple overheard scraper",
   "main": "./dist/index.js",
-  "bin": "./dist/bin.js",
   "type": "module",
+  "exports": {
+    "./bin": {
+      "import": "./dist/bin.js",
+      "require": "./dist/bin.cjs"
+    },
+    "./overheard": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "scripts": {
     "start": "vite-node src/bin.ts",
     "clean": "rimraf bin dist docs",
-    "build": "tsc --stripInternal",
+    "build": "vite build",
     "fmt": "prettier -c --write \"**/*.{md,cjs,js,json,ts,yml,yaml}\"",
     "lint": "pnpm run /^lint:.*/",
     "lint:es": "eslint .",
@@ -34,9 +43,6 @@
     "node": ">=18"
   },
   "engineStrict": true,
-  "pkg": {
-    "outputPath": "bin"
-  },
   "dependencies": {
     "commander": "^12.0.0",
     "typescript-event-target": "^1.1.0"
@@ -51,11 +57,13 @@
     "husky": "^9.0.11",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.5",
+    "rollup-plugin-node-externals": "^7.1.2",
     "typedoc": "^0.25.10",
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.8.0",
     "vite": "^5.1.4",
     "vite-node": "^1.3.1",
+    "vite-plugin-dts": "^3.9.0",
     "vitest": "^1.3.1"
   }
 }
