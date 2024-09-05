@@ -1,9 +1,4 @@
-/**
- * @module bin
- * @description Overheard command-line interface
- * @author ashnel3
- * @license MIT
- */
+#!/usr/bin/env node
 
 import { Command, CommanderError } from 'commander'
 import { Overheard } from './Overheard'
